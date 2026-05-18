@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SPEAR v2 — Surgical Procedural Execution, Assessment & Risk</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #06090c;
+  --s1: #0b1014;
+  --s2: #0f1519;
+  --s3: #141c22;
+  --b1: #1a2530;
+  --b2: #243344;
+  --teal: #00bfa5;
+  --teal2: #00897b;
+  --amber: #ffb300;
+  --red: #ef5350;
+  --blue: #42a5f5;
+  --violet: #7e57c2;
+  --green: #66bb6a;
+  --tx: #dce8f0;
+  --tx2: #8fa8b8;
+  --tx3: #455a68;
+  --mono: 'IBM Plex Mono', monospace;
+  --serif: 'Playfair Display', serif;
+  --sans: 'Barlow', sans-serif;
+  --e1: #00bfa5; /* measured */
+  --e2: #42a5f5; /* literature */
+  --e3: #ffb300; /* expert */
+  --e4: #7e57c2; /* simulated */
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-size: 14px; line-height: 1.6; overflow-x: hidden; }
+
+/* ── GRAIN ── */
+body::after {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23g)' opacity='0.025'/%3E%3C/svg%3E");
+  opacity: .6;
+}
+
+/* ── HEADER ── */
+header {
+  position: sticky; top: 0; z-index: 200;
+  height: 60px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 40px;
+  background: rgba(6,9,12,.9); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--b1);
+}
+.logo { font-family: var(--mono); font-size: 11px; letter-spacing: .18em; color: var(--teal); text-transform: uppercase; }
+.logo span { color: var(--tx3); }
+.nav { display: flex; gap: 2px; }
+.nav-btn {
+  background: none; border: 1px solid transparent; cursor: pointer; border-radius: 3px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--tx3); padding: 7px 13px; transition: .18s;
+}
+.nav-btn:hover, .nav-btn.active { color: var(--teal); border-color: var(--b2); background: var(--s2); }
+.vtag { font-family: var(--mono); font-size: 10px; color: var(--tx3); letter-spacing: .08em; }
+
+/* ── PAGE SECTIONS ── */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ── HERO ── */
+.hero {
+  position: relative; overflow: hidden;
+  padding: 80px 40px 64px;
+  border-bottom: 1px solid var(--b1);
+  display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 48px; align-items: center;
+}
+.hero-grid {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: linear-gradient(var(--b1) 1px, transparent 1px), linear-gradient(90deg, var(--b1) 1px, transparent 1px);
+  background-size: 56px 56px; opacity: .2;
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 10px; margin-bottom: 22px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .2em; color: var(--teal); text-transform: uppercase;
+}
+.hero-eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--teal); }
+h1 { font-family: var(--serif); font-size: clamp(36px, 4.5vw, 68px); line-height: 1.04; margin-bottom: 18px; color: var(--tx); }
+h1 em { font-style: italic; color: var(--teal); }
+.hero-lede { color: var(--tx2); font-size: 15px; line-height: 1.72; max-width: 640px; margin-bottom: 32px; font-weight: 300; }
+
+.score-strip {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  border: 1px solid var(--b1); border-radius: 4px; overflow: hidden; background: var(--b1);
+  gap: 1px; max-width: 720px;
+}
+.score-tile { background: var(--s1); padding: 18px 16px; }
+.score-tile-id { font-family: var(--mono); font-size: 10px; letter-spacing: .16em; color: var(--tx3); text-transform: uppercase; margin-bottom: 8px; }
+.score-tile-val { font-family: var(--mono); font-size: 32px; line-height: 1; margin-bottom: 6px; }
+.score-tile-desc { font-size: 11px; color: var(--tx2); line-height: 1.5; }
+
+/* Hero radar */
+.hero-radar {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--s1); border: 1px solid var(--b1); border-radius: 6px;
+  padding: 24px; position: relative;
+}
+.radar-note {
+  position: absolute; bottom: 12px; left: 16px; right: 16px;
+  font-family: var(--mono); font-size: 9px; color: var(--tx3); letter-spacing: .1em; text-transform: uppercase;
+  text-align: center;
+}
+
+/* ── SECTION ── */
+.section { padding: 56px 40px; border-bottom: 1px solid var(--b1); }
+.sec-header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 12px; }
+.sec-num { font-family: var(--mono); font-size: 10px; color: var(--tx3); letter-spacing: .14em; }
+h2 { font-family: var(--serif); font-size: 30px; color: var(--tx); }
+.sec-lede { color: var(--tx2); font-size: 13px; line-height: 1.75; max-width: 860px; margin-bottom: 32px; font-weight: 300; }
+
+/* ── WHAT CHANGED CALLOUT ── */
+.callout-strip {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+  background: var(--b1); border: 1px solid var(--b1); border-radius: 4px; overflow: hidden; margin-bottom: 40px;
+}
+.callout-cell {
+  background: var(--s1); padding: 20px 18px;
+}
+.callout-before { font-family: var(--mono); font-size: 10px; color: var(--tx3); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 6px; }
+.callout-after { font-family: var(--mono); font-size: 10px; color: var(--teal); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 6px; }
+.callout-v1 { font-size: 12px; color: var(--tx3); line-height: 1.5; }
+.callout-v2 { font-size: 12px; color: var(--tx); line-height: 1.5; }
+
+/* ── OVERVIEW TABLE ── */
+.table-wrap { border: 1px solid var(--b1); border-radius: 4px; overflow: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+thead tr { background: var(--s2); }
+th { font-family: var(--mono); font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--tx3); padding: 12px 13px; white-space: nowrap; border-bottom: 1px solid var(--b1); text-align: left; }
+td { padding: 13px 13px; border-bottom: 1px solid var(--b1); color: var(--tx2); font-size: 12px; vertical-align: middle; }
+tbody tr:hover td { background: var(--s2); }
+.td-serif { font-family: var(--serif); font-size: 15px; color: var(--tx); }
+.td-mono { font-family: var(--mono); }
+.td-bold { font-weight: 600; color: var(--tx); font-size: 13px; }
+
+/* score cells */
+.sc-cci { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--red); }
+.sc-tes { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--teal); }
+.sc-wsl { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--amber); }
+.sc-ois { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--blue); }
+.sc-sps { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--tx); }
+
+/* evidence chips */
+.ev { font-family: var(--mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; padding: 4px 7px; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; display: inline-block; }
+.ev-e1 { color: var(--e1); border-color: rgba(0,191,165,.25); background: rgba(0,191,165,.06); }
+.ev-e2 { color: var(--e2); border-color: rgba(66,165,245,.25); background: rgba(66,165,245,.06); }
+.ev-e3 { color: var(--e3); border-color: rgba(255,179,0,.25); background: rgba(255,179,0,.06); }
+.ev-e4 { color: var(--e4); border-color: rgba(126,87,194,.25); background: rgba(126,87,194,.08); }
+
+/* shot chips */
+.shot { font-family: var(--mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; padding: 4px 8px; border-radius: 2px; border: 1px solid transparent; white-space: nowrap; display: inline-block; }
+.shot-driver { color: var(--red); border-color: rgba(239,83,80,.25); background: rgba(239,83,80,.06); }
+.shot-iron { color: var(--amber); border-color: rgba(255,179,0,.25); background: rgba(255,179,0,.06); }
+.shot-wedge { color: var(--teal); border-color: rgba(0,191,165,.25); background: rgba(0,191,165,.06); }
+.shot-putter { color: var(--blue); border-color: rgba(66,165,245,.25); background: rgba(66,165,245,.06); }
+
+/* state chips */
+.state-chip { font-family: var(--mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; padding: 4px 7px; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+
+/* phases */
+.phases { display: flex; flex-wrap: wrap; gap: 4px; }
+.phase-p { font-family: var(--mono); font-size: 9px; color: var(--tx3); border: 1px solid var(--b1); padding: 3px 6px; border-radius: 999px; letter-spacing: .06em; text-transform: uppercase; }
+
+/* mini score bar */
+.mini-bar { display: flex; align-items: center; gap: 7px; }
+.mini-track { flex: 1; min-width: 48px; height: 3px; background: var(--b2); border-radius: 2px; overflow: hidden; }
+.mini-fill { height: 100%; border-radius: 2px; }
+
+/* ── SCORING LAB ── */
+.lab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+.lab-panel { background: var(--s1); border: 1px solid var(--b1); border-radius: 4px; overflow: hidden; }
+.lab-panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 16px; border-bottom: 1px solid var(--b1); background: var(--s2);
+}
+.lab-panel-title { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--tx2); }
+.lab-panel-score { font-family: var(--mono); font-size: 24px; font-weight: 500; }
+.lab-panel-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+.axis-row-v2 { display: flex; flex-direction: column; gap: 4px; }
+.axis-top { display: flex; justify-content: space-between; align-items: baseline; }
+.axis-name-v2 { font-size: 12px; font-weight: 600; color: var(--tx); letter-spacing: .02em; }
+.axis-weight { font-family: var(--mono); font-size: 9px; color: var(--tx3); border: 1px solid var(--b1); padding: 2px 5px; border-radius: 2px; }
+.axis-desc-v2 { font-size: 11px; color: var(--tx3); line-height: 1.5; }
+.axis-slider-row { display: flex; gap: 10px; align-items: center; }
+.axis-slider-v2 {
+  flex: 1; -webkit-appearance: none; appearance: none;
+  height: 3px; border-radius: 2px; background: var(--b2); outline: none; cursor: pointer;
+}
+.axis-slider-v2::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid var(--bg); cursor: pointer;
+  box-shadow: 0 0 6px rgba(0,0,0,.5);
+}
+.axis-val { font-family: var(--mono); font-size: 16px; width: 40px; text-align: right; }
+
+/* Derived scores panel */
+.derived-panel { background: var(--s1); border: 1px solid var(--b1); border-radius: 4px; overflow: hidden; margin-bottom: 20px; }
+.derived-head { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid var(--b1); background: var(--s2); }
+.derived-title { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--tx2); }
+.derived-body { display: grid; grid-template-columns: repeat(5, 1fr); background: var(--b1); gap: 1px; }
+.derived-cell { background: var(--s1); padding: 20px 16px; }
+.derived-id { font-family: var(--mono); font-size: 9px; letter-spacing: .16em; color: var(--tx3); text-transform: uppercase; margin-bottom: 8px; }
+.derived-num { font-family: var(--mono); font-size: 40px; line-height: 1; margin-bottom: 6px; transition: color .3s; }
+.derived-note { font-size: 11px; color: var(--tx3); line-height: 1.5; }
+
+/* Interpretation block */
+.interp-block { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.interp-card { background: var(--s1); border: 1px solid var(--b1); border-radius: 4px; padding: 20px; }
+.interp-label { font-family: var(--mono); font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--tx3); margin-bottom: 10px; }
+.interp-value { font-family: var(--serif); font-size: 24px; color: var(--tx); margin-bottom: 8px; }
+.interp-note { font-size: 12px; color: var(--tx2); line-height: 1.6; }
+.formula-block {
+  background: var(--bg); border: 1px solid var(--b2); border-radius: 3px;
+  padding: 14px 16px; font-family: var(--mono); font-size: 11px; color: var(--amber);
+  line-height: 1.85; white-space: pre-wrap; margin-top: 14px;
+}
+
+/* ── PLAYBOOK ── */
+.playbook-filter { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+.filter-btn {
+  background: none; border: 1px solid var(--b1); cursor: pointer;
+  font-family: var(--mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--tx3); padding: 7px 12px; border-radius: 999px; transition: .18s;
+}
+.filter-btn:hover, .filter-btn.active-f { color: var(--teal); border-color: rgba(0,191,165,.4); background: rgba(0,191,165,.06); }
+
+.playbook-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; }
+.play-card {
+  background: var(--s1); border: 1px solid var(--b1); border-radius: 4px; overflow: hidden;
+  transition: .2s ease; cursor: default;
+}
+.play-card:hover { transform: translateY(-2px); border-color: var(--b2); }
+.play-card-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 14px 16px; border-bottom: 1px solid var(--b1); gap: 10px;
+}
+.play-card-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.play-card-sps { font-family: var(--mono); font-size: 24px; color: var(--tx3); }
+.play-card-title { font-family: var(--serif); font-size: 22px; color: var(--tx); margin: 12px 16px 3px; }
+.play-card-spec { font-size: 11px; color: var(--tx3); margin: 0 16px 10px; font-family: var(--mono); letter-spacing: .04em; }
+.play-card-phases { display: flex; gap: 5px; flex-wrap: wrap; margin: 0 16px 12px; }
+.phase-arrow { font-family: var(--mono); font-size: 8px; color: var(--teal); margin: 0 1px; }
+
+.play-scores {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+  background: var(--b1); border-top: 1px solid var(--b1); border-bottom: 1px solid var(--b1);
+}
+.play-score-cell { background: var(--s2); padding: 10px 8px; text-align: center; }
+.play-score-id { font-family: var(--mono); font-size: 8px; letter-spacing: .12em; text-transform: uppercase; color: var(--tx3); margin-bottom: 4px; }
+.play-score-val { font-family: var(--mono); font-size: 18px; font-weight: 500; }
+
+.play-card-body { padding: 13px 16px 16px; }
+.play-kicker { font-family: var(--mono); font-size: 8px; letter-spacing: .14em; text-transform: uppercase; color: var(--tx3); margin-bottom: 6px; margin-top: 12px; }
+.play-kicker:first-child { margin-top: 0; }
+.play-metrics-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 4px; }
+.play-metric-item { display: flex; flex-direction: column; gap: 2px; }
+.play-metric-val { font-family: var(--mono); font-size: 13px; color: var(--tx); }
+.play-metric-lbl { font-family: var(--mono); font-size: 8px; color: var(--tx3); text-transform: uppercase; letter-spacing: .1em; }
+.failure-list { display: flex; flex-direction: column; gap: 4px; }
+.failure-item { font-size: 12px; color: var(--tx2); display: flex; gap: 8px; line-height: 1.5; }
+.failure-item::before { content: '↳'; color: var(--red); flex-shrink: 0; }
+.play-assist { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; font-family: var(--mono); font-size: 9px; color: var(--teal); letter-spacing: .08em; border: 1px solid rgba(0,191,165,.2); padding: 5px 9px; border-radius: 999px; }
+
+/* ── STATE MATRIX ── */
+.state-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.state-card {
+  background: var(--s1); border: 1px solid var(--b1); border-radius: 4px; padding: 20px 16px;
+}
+.state-glyph { font-family: var(--mono); font-size: 22px; margin-bottom: 10px; display: block; }
+.state-name { font-family: var(--serif); font-size: 18px; margin-bottom: 4px; }
+.state-golf { font-family: var(--mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--tx3); margin-bottom: 10px; }
+.state-trigger { font-family: var(--mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--tx3); margin-bottom: 6px; }
+.state-trigger-val { font-family: var(--mono); font-size: 10px; border: 1px solid var(--b2); padding: 5px 8px; border-radius: 3px; color: var(--tx2); line-height: 1.55; display: block; margin-bottom: 10px; }
+.state-desc { font-size: 12px; color: var(--tx2); line-height: 1.6; }
+
+/* ── METHODOLOGY ── */
+.method-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.method-card { background: var(--s1); border: 1px solid var(--b1); border-radius: 4px; padding: 22px; }
+.method-num-tag { font-family: var(--mono); font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--teal); margin-bottom: 10px; display: block; }
+.method-title { font-family: var(--serif); font-size: 22px; color: var(--tx); margin-bottom: 10px; }
+.method-body { font-size: 13px; color: var(--tx2); line-height: 1.75; font-weight: 300; }
+.method-sources { margin-top: 12px; display: flex; flex-direction: column; gap: 4px; }
+.method-source { font-family: var(--mono); font-size: 9px; color: var(--tx3); letter-spacing: .06em; display: flex; gap: 8px; }
+.method-source::before { content: '↗'; color: var(--blue); flex-shrink: 0; }
+
+/* ── EVIDENCE LEGEND ── */
+.ev-legend { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
+
+/* ── FOOT ── */
+footer {
+  display: flex; justify-content: space-between; align-items: center; gap: 20px;
+  padding: 22px 40px; border-top: 1px solid var(--b1);
+  font-family: var(--mono); font-size: 10px; color: var(--tx3); letter-spacing: .08em; text-transform: uppercase;
+  position: relative; z-index: 1;
+}
+.live-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--teal); margin-right: 6px; animation: blink 2.4s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── TRANSITIONS ── */
+.fade-in { opacity: 0; transform: translateY(14px); transition: opacity .4s ease, transform .4s ease; }
+.fade-in.visible { opacity: 1; transform: none; }
+
+@media (max-width: 1100px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero-radar { display: none; }
+  .score-strip { grid-template-columns: repeat(3, 1fr); }
+  .lab-grid { grid-template-columns: 1fr; }
+  .interp-block { grid-template-columns: 1fr; }
+  .method-grid { grid-template-columns: 1fr; }
+  .state-grid { grid-template-columns: repeat(3, 1fr); }
+  .derived-body { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 700px) {
+  header { height: auto; flex-direction: column; padding: 14px 16px; gap: 10px; align-items: flex-start; }
+  .hero, .section, footer { padding-left: 16px; padding-right: 16px; }
+  .callout-strip { grid-template-columns: 1fr 1fr; }
+  .score-strip { grid-template-columns: 1fr 1fr; }
+  .state-grid { grid-template-columns: 1fr 1fr; }
+  .derived-body { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">SPEAR <span>v2</span> &nbsp;·&nbsp; <span>Surgical Procedural Execution, Assessment &amp; Risk</span></div>
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showPage('overview',this)">Overview</button>
+    <button class="nav-btn" onclick="showPage('lab',this)">Scoring Lab</button>
+    <button class="nav-btn" onclick="showPage('playbook',this)">Playbook</button>
+    <button class="nav-btn" onclick="showPage('states',this)">States</button>
+    <button class="nav-btn" onclick="showPage('method',this)">Methodology</button>
+  </nav>
+  <div class="vtag">Golf is the language · science is the engine</div>
+</header>
+
+<!-- ════════════════════════════════════════════
+     HERO
+════════════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-grid"></div>
+  <div style="position:relative;z-index:1">
+    <div class="hero-eyebrow">Scientific Procedural Framework · v2</div>
+    <h1>Four separated scores.<br><em>One interpretive layer.</em><br>No false precision.</h1>
+    <p class="hero-lede">
+      SPEAR v2 separates what the case demands from what the operator does from the burden they carry from the outcome they produce. Golf remains the interpretive surface — Driver for access, Iron for controlled progression, Wedge for precision manipulation, Putter for closure. The scientific engine is a four-layer architecture rebuilt around measurable, separable, falsifiable variables.
+    </p>
+    <div class="score-strip">
+      <div class="score-tile">
+        <div class="score-tile-id">CCI</div>
+        <div class="score-tile-val" style="color:var(--red)">–</div>
+        <div class="score-tile-desc">Intrinsic case complexity before execution</div>
+      </div>
+      <div class="score-tile">
+        <div class="score-tile-id">TES</div>
+        <div class="score-tile-val" style="color:var(--teal)">–</div>
+        <div class="score-tile-desc">Observed technical execution quality</div>
+      </div>
+      <div class="score-tile">
+        <div class="score-tile-id">WSL</div>
+        <div class="score-tile-val" style="color:var(--amber)">–</div>
+        <div class="score-tile-desc">Cognitive and contextual workload</div>
+      </div>
+      <div class="score-tile">
+        <div class="score-tile-id">OIS</div>
+        <div class="score-tile-val" style="color:var(--blue)">–</div>
+        <div class="score-tile-desc">Outcome integrity and safety</div>
+      </div>
+      <div class="score-tile">
+        <div class="score-tile-id">SPS</div>
+        <div class="score-tile-val" style="color:var(--tx)">–</div>
+        <div class="score-tile-desc">Dashboard composite — not the whole truth</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-radar" style="position:relative;z-index:1">
+    <svg width="360" height="360" viewBox="0 0 360 360">
+      <defs>
+        <radialGradient id="rg" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#00bfa5" stop-opacity=".18"/>
+          <stop offset="100%" stop-color="#00bfa5" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <g fill="none" stroke="#1a2530" stroke-width="1">
+        <polygon points="180,48 290,128 248,258 112,258 70,128"/>
+        <polygon points="180,80 262,140 230,232 130,232 98,140"/>
+        <polygon points="180,112 234,152 212,206 148,206 126,152"/>
+        <polygon points="180,144 206,164 194,185 166,185 154,164"/>
+      </g>
+      <g stroke="#1a2530" stroke-width="1">
+        <line x1="180" y1="180" x2="180" y2="46"/>
+        <line x1="180" y1="180" x2="292" y2="127"/>
+        <line x1="180" y1="180" x2="249" y2="260"/>
+        <line x1="180" y1="180" x2="111" y2="260"/>
+        <line x1="180" y1="180" x2="68" y2="127"/>
+      </g>
+      <polygon id="radar-poly" points="180,78 268,140 230,238 130,224 104,138"
+        fill="url(#rg)" stroke="#00bfa5" stroke-width="1.5" stroke-linejoin="round"/>
+      <g font-family="IBM Plex Mono,monospace" font-size="10" fill="#455a68" letter-spacing=".1em" text-anchor="middle">
+        <text x="180" y="30">TES</text>
+        <text x="314" y="125">OIS</text>
+        <text x="252" y="284">WSL</text>
+        <text x="108" y="284">CCI</text>
+        <text x="44" y="125">RECOVERY</text>
+      </g>
+      <circle cx="180" cy="180" r="3.5" fill="#00bfa5"/>
+    </svg>
+    <div class="radar-note">Profile — not a blended impression score</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     OVERVIEW
+════════════════════════════════════════════ -->
+<div class="page active" id="page-overview">
+  <div class="section">
+    <div class="sec-header">
+      <span class="sec-num">01</span>
+      <h2>What Changed from v1</h2>
+    </div>
+    <p class="sec-lede">
+      v1 was a strong start but it performed scientific certainty without proving it. A single blended SER score conflated how hard the case was with how well it was executed with what happened to the patient. Below is the precise set of structural changes made in v2.
+    </p>
+    <div class="callout-strip fade-in">
+      <div class="callout-cell">
+        <div class="callout-before">v1 Had</div>
+        <div class="callout-v1">One blended SER score with multiplier stack</div>
+        <div style="height:12px"></div>
+        <div class="callout-after">v2 Has</div>
+        <div class="callout-v2">CCI + TES + WSL + OIS computed separately, SPS as a derived summary only</div>
+      </div>
+      <div class="callout-cell">
+        <div class="callout-before">v1 Had</div>
+        <div class="callout-v1">Pressure multipliers as scalar adjustments to a single score</div>
+        <div style="height:12px"></div>
+        <div class="callout-after">v2 Has</div>
+        <div class="callout-v2">Workload modeled as its own WSL layer — six scored dimensions, not an on/off toggle</div>
+      </div>
+      <div class="callout-cell">
+        <div class="callout-before">v1 Had</div>
+        <div class="callout-v1">Golf tier (Driver/Iron/Wedge/Putter) as the primary classification output</div>
+        <div style="height:12px"></div>
+        <div class="callout-after">v2 Has</div>
+        <div class="callout-v2">Golf archetype is an interpretive label, not the score itself — clearly separated</div>
+      </div>
+      <div class="callout-cell">
+        <div class="callout-before">v1 Had</div>
+        <div class="callout-v1">Metrics stated as fact without evidence grading</div>
+        <div style="height:12px"></div>
+        <div class="callout-after">v2 Has</div>
+        <div class="callout-v2">Every data point tagged E1 (measured), E2 (literature), E3 (expert), E4 (simulated)</div>
+      </div>
+    </div>
+
+    <div class="ev-legend fade-in">
+      <span class="ev ev-e1">E1 · Directly Measured</span>
+      <span class="ev ev-e2">E2 · Literature-Derived</span>
+      <span class="ev ev-e3">E3 · Expert-Estimated</span>
+      <span class="ev ev-e4">E4 · Simulation-Based</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--tx3);margin-left:4px;align-self:center">— evidence grade shown on every data point</span>
+    </div>
+
+    <div class="table-wrap fade-in">
+      <table>
+        <thead>
+          <tr>
+            <th>Golf Archetype</th>
+            <th>Procedure</th>
+            <th>Specialty</th>
+            <th>Evidence</th>
+            <th>Phase Sequence</th>
+            <th>CCI ↑ harder</th>
+            <th>TES ↑ better</th>
+            <th>WSL ↑ heavier</th>
+            <th>OIS ↑ safer</th>
+            <th>SPS</th>
+          </tr>
+        </thead>
+        <tbody id="overview-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SCORING LAB
+════════════════════════════════════════════ -->
+<div class="page" id="page-lab">
+  <div class="section">
+    <div class="sec-header">
+      <span class="sec-num">02</span>
+      <h2>Scoring Lab</h2>
+    </div>
+    <p class="sec-lede">
+      The lab exposes every variable. Difficulty, execution quality, and cognitive burden live in separate panels with separate weights so they cannot contaminate each other. Adjust any variable and watch four independent subscores respond — then see how SPS is derived from them. This architecture makes the model calibratable against real procedural data and publishable in a validation study.
+    </p>
+
+    <div class="derived-panel fade-in">
+      <div class="derived-head">
+        <div class="derived-title">Computed Output — four scientific subscores + one derived composite</div>
+        <div id="lab-state-chip" class="state-chip" style="color:var(--teal);border-color:rgba(0,191,165,.3)">Clean Strike</div>
+      </div>
+      <div class="derived-body">
+        <div class="derived-cell">
+          <div class="derived-id">CCI</div>
+          <div class="derived-num" id="d-cci" style="color:var(--red)">76</div>
+          <div class="derived-note">Intrinsic case burden. Not operator quality.</div>
+        </div>
+        <div class="derived-cell">
+          <div class="derived-id">TES</div>
+          <div class="derived-num" id="d-tes" style="color:var(--teal)">84</div>
+          <div class="derived-note">Observed technical execution.</div>
+        </div>
+        <div class="derived-cell">
+          <div class="derived-id">WSL</div>
+          <div class="derived-num" id="d-wsl" style="color:var(--amber)">71</div>
+          <div class="derived-note">Cognitive and contextual load.</div>
+        </div>
+        <div class="derived-cell">
+          <div class="derived-id">OIS</div>
+          <div class="derived-num" id="d-ois" style="color:var(--blue)">92</div>
+          <div class="derived-note">Integrity guard. Prevents execution elegance masking unsafe outcomes.</div>
+        </div>
+        <div class="derived-cell" style="background:linear-gradient(160deg,rgba(0,191,165,.06),rgba(66,165,245,.04))">
+          <div class="derived-id">SPS</div>
+          <div class="derived-num" id="d-sps" style="color:var(--tx)">82</div>
+          <div class="derived-note">Dashboard composite only. Read beside the four subscores above.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lab-grid" id="lab-grid"></div>
+
+    <div class="interp-block fade-in">
+      <div class="interp-card">
+        <div class="interp-label">Golf Archetype (interpretive)</div>
+        <div class="interp-value" id="interp-golf">Sand Wedge</div>
+        <div class="interp-note">Golf class is derived from the CCI + precision profile. It is a narrative and training tool, not the scientific score.</div>
+      </div>
+      <div class="interp-card">
+        <div class="interp-label">SPS Formula</div>
+        <div class="formula-block">SPS = 0.40×TES + 0.25×OIS + 0.20×(100−WSL) + 0.15×(100−CCI)
+
+Rationale: privileges execution and outcome integrity,
+discounts intrinsic burden and workload so operators
+are not penalized for taking difficult cases.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     PLAYBOOK
+════════════════════════════════════════════ -->
+<div class="page" id="page-playbook">
+  <div class="section">
+    <div class="sec-header">
+      <span class="sec-num">03</span>
+      <h2>Procedure Playbook</h2>
+    </div>
+    <p class="sec-lede">
+      Cards are phase-aware, evidence-tagged, and score-separated. Each card stores: golf archetype, procedure phase sequence, four-score profile, objective metrics with evidence grade, failure modes, and recommended assist. This structure is machine-ingestible for simulation design, training overlay, and future ML benchmarking.
+    </p>
+    <div class="playbook-filter">
+      <button class="filter-btn active-f" onclick="filterCards('all',this)">All</button>
+      <button class="filter-btn" onclick="filterCards('driver',this)">Driver</button>
+      <button class="filter-btn" onclick="filterCards('iron',this)">Iron</button>
+      <button class="filter-btn" onclick="filterCards('wedge',this)">Wedge</button>
+      <button class="filter-btn" onclick="filterCards('putter',this)">Putter</button>
+    </div>
+    <div class="playbook-grid" id="playbook-grid"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     STATES
+════════════════════════════════════════════ -->
+<div class="page" id="page-states">
+  <div class="section">
+    <div class="sec-header">
+      <span class="sec-num">04</span>
+      <h2>Operative State Matrix</h2>
+    </div>
+    <p class="sec-lede">
+      States are no longer descriptive flavor. Each state is defined by explicit quantitative trigger conditions on the four subscores so it can fire automatically during simulation playback, real-time procedural monitoring, or post-case review segmentation.
+    </p>
+    <div class="state-grid" id="state-grid"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     METHODOLOGY
+════════════════════════════════════════════ -->
+<div class="page" id="page-method">
+  <div class="section">
+    <div class="sec-header">
+      <span class="sec-num">05</span>
+      <h2>Scoring Methodology</h2>
+    </div>
+    <p class="sec-lede">
+      SPEAR v2 is a layered assessment architecture, not a single impression score. It borrows structure from validated surgical skill frameworks (OSATS, GRS, NASA-TLX) while preserving the golf translation layer for interpretive, communicative, and training design utility. The result is a model that can be calibrated, challenged, and eventually validated.
+    </p>
+    <div class="method-grid" id="method-grid"></div>
+  </div>
+</div>
+
+<footer>
+  <div><span class="live-dot"></span>SPEAR v2 · Layered Procedural Scoring System</div>
+  <div>Driver / Iron / Wedge / Putter are task archetypes — not substitutes for measurement</div>
+</footer>
+
+<!-- ════════════════════════════════════════════
+     DATA + LOGIC
+════════════════════════════════════════════ -->
+<script>
+// ─────────────────────────────────────────
+// AXIS DEFINITIONS
+// ─────────────────────────────────────────
+const CCI_AXES = [
+  { id:'aRisk',  name:'Anatomy Risk',          w:0.24, desc:'Critical structure adjacency, vascular density, access vulnerability.', v:82, color:'var(--red)' },
+  { id:'tScale', name:'Target Scale Demand',   w:0.18, desc:'Spatial tolerance, tissue scale, available operating margin.', v:92, color:'var(--red)' },
+  { id:'durBur', name:'Duration Burden',       w:0.16, desc:'Expected time-on-task before fatigue and drift become meaningful.', v:58, color:'var(--red)' },
+  { id:'revCx',  name:'Revision Complexity',   w:0.14, desc:'Scar tissue, altered planes, prior failure, repeat procedure load.', v:20, color:'var(--red)' },
+  { id:'brBur',  name:'Branching Burden',      w:0.14, desc:'Density of consequential decision forks across the case.', v:74, color:'var(--red)' },
+  { id:'techDep',name:'Technology Dependence', w:0.14, desc:'Navigation, robotic, optical, monitoring system reliance.', v:86, color:'var(--red)' },
+];
+const TES_AXES = [
+  { id:'tissue', name:'Respect for Tissue',     w:0.20, desc:'Atraumatic handling, preservation under manipulation.', v:90, color:'var(--teal)' },
+  { id:'instru', name:'Instrument Handling',    w:0.18, desc:'Dexterity, steadiness, appropriate use.', v:87, color:'var(--teal)' },
+  { id:'timeM',  name:'Time & Motion Economy',  w:0.14, desc:'Efficiency without waste, hesitation, or chaotic pathing.', v:80, color:'var(--teal)' },
+  { id:'flow',   name:'Flow of Operation',      w:0.14, desc:'Sequencing, smooth progression, orientation across phases.', v:84, color:'var(--teal)' },
+  { id:'precT',  name:'Targeting Precision',    w:0.22, desc:'Spatial accuracy at point of action under narrow tolerance bands.', v:95, color:'var(--teal)' },
+  { id:'recov',  name:'Recovery Quality',       w:0.12, desc:'Recognize, absorb, and correct deviation before integrity loss.', v:76, color:'var(--teal)' },
+];
+const WSL_AXES = [
+  { id:'menD',  name:'Mental Demand',      w:0.22, desc:'Concentration, anticipation, working memory burden.', v:86, color:'var(--amber)' },
+  { id:'physD', name:'Physical Demand',    w:0.12, desc:'Postural strain, fine-motor fatigue, musculoskeletal burden.', v:60, color:'var(--amber)' },
+  { id:'tempD', name:'Temporal Demand',    w:0.18, desc:'Time pressure, pace pressure, urgency from case conditions.', v:70, color:'var(--amber)' },
+  { id:'taskC', name:'Task Complexity',    w:0.20, desc:'Multistep intricacy, coordination burden during execution.', v:90, color:'var(--amber)' },
+  { id:'sitS',  name:'Situational Stress', w:0.18, desc:'Consequence awareness, event volatility, psychological pressure.', v:74, color:'var(--amber)' },
+  { id:'distr', name:'Distractions',       w:0.10, desc:'Noise, interruptions, competing cues, environmental instability.', v:18, color:'var(--amber)' },
+];
+const OIS_AXES = [
+  { id:'critErr', name:'Critical Error',          penalty:25, desc:'Binary or graded severe error with major safety consequence.', v:0, color:'var(--blue)' },
+  { id:'tissInj', name:'Tissue Injury',            penalty:20, desc:'Unintended collateral tissue damage or insult.', v:0, color:'var(--blue)' },
+  { id:'forceV',  name:'Force Violation',          penalty:15, desc:'Unsafe force excursion beyond biomechanical envelope.', v:0, color:'var(--blue)' },
+  { id:'incomp',  name:'Incomplete Completion',    penalty:15, desc:'Residual task incompleteness, unfinished phase, inadequate endpoint.', v:0, color:'var(--blue)' },
+  { id:'bleed',   name:'Bleeding / Control Loss',  penalty:10, desc:'Escalated blood loss or equivalent integrity compromise.', v:0, color:'var(--blue)' },
+  { id:'closure', name:'Closure Integrity Defect', penalty:15, desc:'Leak, misalignment, dehiscence, final-state integrity failure.', v:0, color:'var(--blue)' },
+];
+
+// ─────────────────────────────────────────
+// CASES
+// ─────────────────────────────────────────
+const CASES = [
+  {
+    id:'retinal', procedure:'Retinal Membrane Peel', specialty:'Ophthalmology', evidence:'e2',
+    golf:'Lob Wedge', shotClass:'wedge',
+    phases:['Approach','Vitrectomy','Staining','Initiation','Peel','Verify'],
+    scores:{ cci:81, tes:88, wsl:75, ois:94 },
+    obj:{ precision:'50 μm', tremor:'20–30 μm E2', duration:'1–2 hrs E2', decisions:'8 E3', load:'Very High E3' },
+    failures:['Membrane tearing from excess traction','Iatrogenic retinal break at initiation site','Residual epiretinal remnant'],
+    assist:'Robotic micro-bracing · wide-field visualization · force-feedback'
+  },
+  {
+    id:'cochlear', procedure:'Cochlear Implant Insertion', specialty:'Otology', evidence:'e3',
+    golf:'Lob Wedge', shotClass:'wedge',
+    phases:['Mastoidectomy','Facial Recess','Cochleostomy','Insertion','Seal','Verify'],
+    scores:{ cci:78, tes:86, wsl:72, ois:92 },
+    obj:{ precision:'75 μm', tremor:'30–50 μm E3', duration:'1–3 hrs E2', decisions:'9 E3', load:'Very High E3' },
+    failures:['Basilar membrane perforation','Electrode fold-over during insertion','Ossification obstruction'],
+    assist:'Intraop electrophysiology · robotic insertion guidance'
+  },
+  {
+    id:'anastomosis', procedure:'Microsurgical Anastomosis', specialty:'Plastic / Vascular', evidence:'e2',
+    golf:'Sand Wedge', shotClass:'wedge',
+    phases:['Vessel Prep','Approximation','Posterior Wall','Anterior Wall','Patency','Reinforce'],
+    scores:{ cci:69, tes:84, wsl:66, ois:90 },
+    obj:{ precision:'200 μm', tremor:'80 μm E2', duration:'45–90 min E2', decisions:'7 E3', load:'Expert E3' },
+    failures:['Thrombosis at anastomosis site','Back-wall stitch inclusion','Uneven vessel wall apposition'],
+    assist:'Fluorescence angiography · robotic micro-support'
+  },
+  {
+    id:'corneal', procedure:'Corneal Suturing', specialty:'Ophthalmology', evidence:'e2',
+    golf:'Putting', shotClass:'putter',
+    phases:['Wound Inspect','Placement','Tension','Hydration','Verify'],
+    scores:{ cci:55, tes:89, wsl:58, ois:95 },
+    obj:{ precision:'100 μm', tremor:'50 μm E2', duration:'20–40 min E2', decisions:'3 E3', load:'High E3' },
+    failures:['Unequal suture tension causing astigmatism','Corneal distortion','Suture breakage under load'],
+    assist:'Slit-lamp biomicroscopy · topographic feedback'
+  },
+  {
+    id:'spinal', procedure:'Pedicle Screw Fixation', specialty:'Spine Surgery', evidence:'e2',
+    golf:'5-Iron', shotClass:'iron',
+    phases:['Exposure','Trajectory Planning','Tap','Screw','Imaging Verify','Closure'],
+    scores:{ cci:71, tes:80, wsl:68, ois:86 },
+    obj:{ precision:'1500 μm', tremor:'500 μm E2', duration:'2–4 hrs E2', decisions:'12 E2', load:'High E3' },
+    failures:['Pedicle wall breach (medial)','Dural tear at entry','Adjacent segment instability'],
+    assist:'Fluoroscopy-guided navigation · robotic arm placement'
+  },
+  {
+    id:'cardiac', procedure:'Coronary Artery Bypass', specialty:'Cardiac Surgery', evidence:'e2',
+    golf:'Driver', shotClass:'driver',
+    phases:['Sternotomy','Cannulation','CPB On','Graft Harvest','Anastomosis','De-air','Wean','Close'],
+    scores:{ cci:91, tes:82, wsl:88, ois:85 },
+    obj:{ precision:'750 μm', tremor:'400 μm E2', duration:'3–5 hrs E2', decisions:'16 E2', load:'Elite E3' },
+    failures:['Anastomotic leak at toe or heel','Air embolism during de-airing','Graft kinking post-revascularization'],
+    assist:'Cardiopulmonary bypass · TEE monitoring · hybrid visualization'
+  },
+  {
+    id:'tumor', procedure:'Glioma Resection', specialty:'Neurosurgery', evidence:'e3',
+    golf:'Driver', shotClass:'driver',
+    phases:['Craniotomy','Mapping','Entry','Core Debulk','Margin Work','Hemostasis','Closure'],
+    scores:{ cci:94, tes:78, wsl:92, ois:80 },
+    obj:{ precision:'500 μm', tremor:'300 μm E3', duration:'4–7 hrs E2', decisions:'18 E3', load:'Elite E3' },
+    failures:['Critical tract transgression','Incomplete resection at eloquent margins','Intraoperative swelling crisis'],
+    assist:'Intraop MRI · awake mapping · fluorescence-guided resection'
+  },
+  {
+    id:'lapchole', procedure:'Laparoscopic Cholecystectomy', specialty:'General Surgery', evidence:'e1',
+    golf:'Pitching Wedge', shotClass:'wedge',
+    phases:['Port Placement','CVS Dissection','Clipping','Division','Extraction','Closure'],
+    scores:{ cci:45, tes:86, wsl:48, ois:94 },
+    obj:{ precision:'2000 μm', tremor:'1500 μm E2', duration:'30–60 min E1', decisions:'5 E2', load:'Moderate E2' },
+    failures:['Common bile duct injury','Cystic artery bleeding','Incorrect clip placement'],
+    assist:'Critical View of Safety protocol · intraoperative cholangiography'
+  },
+  {
+    id:'tha', procedure:'Total Hip Arthroplasty', specialty:'Orthopaedics', evidence:'e2',
+    golf:'7-Iron', shotClass:'iron',
+    phases:['Approach','Dislocation','Acetabular Prep','Cup Insert','Femoral Prep','Stem','Reduce','Close'],
+    scores:{ cci:58, tes:82, wsl:55, ois:91 },
+    obj:{ precision:'1500 μm', tremor:'800 μm E2', duration:'1–2 hrs E1', decisions:'8 E2', load:'Moderate E3' },
+    failures:['Cup malposition outside safe zone','Intraoperative femur fracture','Leg length discrepancy >10 mm'],
+    assist:'Robotic arm system · digital templating · intraop X-ray'
+  },
+  {
+    id:'tendon', procedure:'Flexor Tendon Repair (Zone II)', specialty:'Hand Surgery', evidence:'e2',
+    golf:'Sand Wedge', shotClass:'wedge',
+    phases:['Incision','Retrieval','Core Suture','Peripheral Suture','Sheath Repair','Closure'],
+    scores:{ cci:62, tes:85, wsl:60, ois:89 },
+    obj:{ precision:'300 μm', tremor:'150 μm E2', duration:'45–90 min E2', decisions:'6 E3', load:'Expert E3' },
+    failures:['Gap formation at repair site','Tendon adhesion formation','Re-rupture at repair under load testing'],
+    assist:'Loupe magnification × 2.5–4.5 · pneumatic tourniquet'
+  },
+  {
+    id:'aorta', procedure:'Thoracic Aortic Aneurysm Repair', specialty:'Vascular Surgery', evidence:'e2',
+    golf:'3-Wood', shotClass:'driver',
+    phases:['Sternotomy','Cannulation','Cooling','Circulatory Arrest','Graft','Rewarm','Wean','Close'],
+    scores:{ cci:96, tes:76, wsl:94, ois:78 },
+    obj:{ precision:'600 μm', tremor:'350 μm E2', duration:'5–8 hrs E2', decisions:'20 E3', load:'Elite E3' },
+    failures:['Anastomotic hemorrhage','Spinal cord ischemia','Graft thrombosis or dissection'],
+    assist:'Deep hypothermic circulatory arrest · spinal CSF drainage · NIRS monitoring'
+  },
+  {
+    id:'closure', procedure:'Wound Closure & Final Suturing', specialty:'General', evidence:'e3',
+    golf:'Putting', shotClass:'putter',
+    phases:['Layer Check','Deep Closure','Subcutaneous','Skin Placement','Dressing'],
+    scores:{ cci:28, tes:88, wsl:34, ois:97 },
+    obj:{ precision:'800 μm', tremor:'500 μm E3', duration:'15–40 min E3', decisions:'3 E3', load:'Low-Mod E3' },
+    failures:['Dead space leaving seroma risk','Stitch abscess from buried knot','Wound dehiscence under tension'],
+    assist:'Standard optical magnification where needed'
+  },
+];
+
+// ─────────────────────────────────────────
+// STATES
+// ─────────────────────────────────────────
+const STATES = [
+  {
+    glyph:'◎', name:'Clean Strike', golf:'Fairway · pure contact', color:'var(--teal)',
+    trigger:'TES ≥ 80 AND OIS ≥ 88 AND WSL ≤ 75',
+    desc:'All subscore axes within optimal tolerance. Procedure progressing as planned with no active integrity threat.'
+  },
+  {
+    glyph:'◔', name:'Slight Mishit', golf:'Playable lie · minor drift', color:'var(--blue)',
+    trigger:'TES 65–79 OR WSL 75–85 with OIS ≥ 85',
+    desc:'Functional but one dimension has drifted. Recovery capacity remains intact. No intervention required yet.'
+  },
+  {
+    glyph:'↺', name:'Off-Plane Recovery', golf:'Recovery shot from rough', color:'var(--amber)',
+    trigger:'TES < 65 OR OIS 75–84 OR WSL > 85',
+    desc:'Active correction underway. Case remains salvageable. Completion probability reduced 8–15% without intervention.'
+  },
+  {
+    glyph:'▲', name:'Hazard State', golf:'Water or bunker hazard', color:'var(--red)',
+    trigger:'OIS < 75 OR CriticalError > 0 OR TissueInjury > 30',
+    desc:'Outcome integrity or severe error burden now dominates. Continued progression requires formal reassessment.'
+  },
+  {
+    glyph:'◆', name:'Clutch Finish', golf:'Pressure putt · consequence', color:'var(--violet)',
+    trigger:'Final phase with WSL > 70 and OIS ≥ 85',
+    desc:'Terminal phase: elevated workload, preserved integrity. Final execution determines whether the case closes cleanly.'
+  },
+];
+
+// ─────────────────────────────────────────
+// METHODOLOGY
+// ─────────────────────────────────────────
+const METHODS = [
+  {
+    num:'01', title:'Case Complexity Index',
+    body:`CCI is a pre-execution difficulty score that captures what the case demands before the operator makes a single move. It is not a judgment of operator quality. Separating CCI from TES prevents the system from rewarding poor execution on easy cases or penalizing excellent surgeons for accepting hard ones.`,
+    formula:`CCI = 100 × (0.24·A + 0.18·T + 0.16·D + 0.14·R + 0.14·B + 0.14·H)
+A = anatomy risk
+T = target scale demand
+D = duration burden
+R = revision complexity
+B = branching burden
+H = technology dependence`,
+    sources:['Surgical complexity scales: Dindo et al., Intraoperative adverse events (Ann Surg 2004)', 'Operative complexity: Gawande AA, NEJM 2002']
+  },
+  {
+    num:'02', title:'Technical Execution Score',
+    body:`TES models what the operator actually does during the procedure. The six sub-dimensions map directly onto established structured surgical skill assessment tools (OSATS, GRS) making it possible to cross-validate with existing rating instruments and eventually calibrate weights through observation data.`,
+    formula:`TES = 0.20·RT + 0.18·IH + 0.14·TM + 0.14·FO + 0.22·PR + 0.12·RC
+RT = respect for tissue
+IH = instrument handling
+TM = time & motion economy
+FO = flow of operation
+PR = targeting precision
+RC = recovery quality`,
+    sources:['OSATS: Martin et al., Ann Surg 1997', 'Global Rating Scale: Reznick et al., CMAJ 1997', 'Motion analysis in surgery: Dosis et al., Surg Endosc 2005']
+  },
+  {
+    num:'03', title:'Workload Stress Load',
+    body:`WSL is modeled directly rather than applied as multiplier toggles. The six dimensions correspond closely to NASA-TLX subscales, making WSL the most immediately cross-validatable layer in SPEAR v2. Separating workload from execution prevents high-stress performance from being misread as poor technique.`,
+    formula:`WSL = 0.22·MD + 0.12·PD + 0.18·TD + 0.20·TC + 0.18·SS + 0.10·DX
+MD = mental demand
+PD = physical demand
+TD = temporal demand
+TC = task complexity
+SS = situational stress
+DX = distractions`,
+    sources:['NASA-TLX: Hart & Staveland, Human Mental Workload 1988', 'Surgical workload: Cao et al., Surg Endosc 1996', 'Cognitive load in OR: Berguer R, Surg Clin N Am 1999']
+  },
+  {
+    num:'04', title:'Outcome Integrity Score',
+    body:`OIS is the safety guard that prevents technically elegant execution from masking unsafe or failed outcomes. It starts at 100 and subtracts weighted penalty loads for critical errors, tissue injury, force violations, incomplete completion, control loss, and closure defects. OIS below 75 triggers Hazard State regardless of TES.`,
+    formula:`OIS = 100 − (25·CE + 20·TI + 15·FV + 15·IC + 10·BL + 15·CV)
+CE = critical error (0–1 graded)
+TI = tissue injury (0–1 graded)
+FV = force violation (0–1 graded)
+IC = incomplete completion (0–1)
+BL = bleeding/loss control (0–1)
+CV = closure/integrity defect (0–1)`,
+    sources:['Intraoperative adverse events: Gawande et al., Surgery 2003', 'Objective structured assessment: Reznick RK, Ann Surg 2006']
+  },
+  {
+    num:'05', title:'Dashboard Composite (SPS)',
+    body:`SPS is the single-number summary for dashboard displays and training reports. It privileges execution and outcome integrity, then discounts difficulty and workload so that operators are not penalized for accepting hard cases or working in high-pressure environments. SPS is always read alongside the four scientific subscores.`,
+    formula:`SPS = 0.40·TES + 0.25·OIS + 0.20·(100−WSL) + 0.15·(100−CCI)
+
+Weight rationale:
+  TES highest — execution is operator's primary accountability
+  OIS second  — outcome safety is non-negotiable
+  (100−WSL) — reward performance under load, not penalize it
+  (100−CCI) — minor difficulty credit for hard cases`,
+    sources:['Composite skill assessment: Eubanks et al., J Laparoendosc Surg 1999', 'Procedural performance grading: Grantcharov et al., BJS 2003']
+  },
+  {
+    num:'06', title:'Golf Interpretive Layer',
+    body:`Driver, Iron, Wedge, and Putter are task archetypes, not score tiers. They classify procedural character for training communication and simulation design — broad access vs. controlled progression vs. precision manipulation vs. closure. The golf layer surfaces last, after scientific scoring, and never overrides it.`,
+    formula:`Golf class is derived, not primary.
+
+  Driver  → CCI > 80 OR duration > 4 hrs
+  Iron    → CCI 50–80 AND precision > 750 μm
+  Wedge   → Precision < 500 μm OR specialization required
+  Putter  → Terminal phase OR suturing/closure task
+
+Archetypes are named interpretations, not scores.`,
+    sources:['Golf biomechanics: Okuda et al., IJSS 2002', 'Kinematic sequence analogy: McNally MP, Sports Biomech 2006']
+  },
+];
+
+// ─────────────────────────────────────────
+// BUILD OVERVIEW TABLE
+// ─────────────────────────────────────────
+function buildTable() {
+  const ev = { e1:'e1', e2:'e2', e3:'e3', e4:'e4' };
+  const evLabel = { e1:'E1 Measured', e2:'E2 Literature', e3:'E3 Expert', e4:'E4 Simulated' };
+  const tbody = document.getElementById('overview-tbody');
+  tbody.innerHTML = CASES.map(c => {
+    const sps = calcSPS(c.scores.tes, c.scores.ois, c.scores.wsl, c.scores.cci);
+    const phaseHtml = c.phases.map((p,i) =>
+      `<span class="phase-p">${p}</span>${i < c.phases.length-1 ? '<span class="phase-arrow">›</span>' : ''}`
+    ).join('');
+    return `<tr>
+      <td><span class="shot shot-${c.shotClass}">${c.golf}</span></td>
+      <td class="td-serif">${c.procedure}</td>
+      <td style="font-size:11px;color:var(--tx3);font-family:var(--mono)">${c.specialty}</td>
+      <td><span class="ev ev-${ev[c.evidence]}">${evLabel[c.evidence]}</span></td>
+      <td><div class="phases">${phaseHtml}</div></td>
+      <td>
+        <div class="mini-bar">
+          <div class="mini-track"><div class="mini-fill" style="width:${c.scores.cci}%;background:var(--red)"></div></div>
+          <span class="sc-cci">${c.scores.cci}</span>
+        </div>
+      </td>
+      <td>
+        <div class="mini-bar">
+          <div class="mini-track"><div class="mini-fill" style="width:${c.scores.tes}%;background:var(--teal)"></div></div>
+          <span class="sc-tes">${c.scores.tes}</span>
+        </div>
+      </td>
+      <td>
+        <div class="mini-bar">
+          <div class="mini-track"><div class="mini-fill" style="width:${c.scores.wsl}%;background:var(--amber)"></div></div>
+          <span class="sc-wsl">${c.scores.wsl}</span>
+        </div>
+      </td>
+      <td>
+        <div class="mini-bar">
+          <div class="mini-track"><div class="mini-fill" style="width:${c.scores.ois}%;background:var(--blue)"></div></div>
+          <span class="sc-ois">${c.scores.ois}</span>
+        </div>
+      </td>
+      <td><span class="sc-sps">${sps}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────
+// BUILD SCORING LAB
+// ─────────────────────────────────────────
+const labState = {};
+function buildLab() {
+  const groups = [
+    { axes: CCI_AXES, panelId: 'cci', title: 'Case Complexity Index (CCI)', color: 'var(--red)' },
+    { axes: TES_AXES, panelId: 'tes', title: 'Technical Execution Score (TES)', color: 'var(--teal)' },
+    { axes: WSL_AXES, panelId: 'wsl', title: 'Workload Stress Load (WSL)', color: 'var(--amber)' },
+    { axes: OIS_AXES, panelId: 'ois', title: 'Outcome Integrity Score (OIS)', color: 'var(--blue)', isPenalty: true },
+  ];
+  const grid = document.getElementById('lab-grid');
+  groups.forEach(g => {
+    const panel = document.createElement('div');
+    panel.className = 'lab-panel fade-in';
+    const sliders = g.axes.map(ax => {
+      labState[ax.id] = ax.v;
+      const max = g.isPenalty ? 100 : 100;
+      return `<div class="axis-row-v2">
+        <div class="axis-top">
+          <span class="axis-name-v2">${ax.name}</span>
+          <span class="axis-weight" style="color:${ax.color}">${g.isPenalty ? `−${ax.penalty}` : `×${ax.w.toFixed(2)}`}</span>
+        </div>
+        <div class="axis-desc-v2">${ax.desc}</div>
+        <div class="axis-slider-row">
+          <input type="range" class="axis-slider-v2" min="0" max="${max}" value="${ax.v}"
+            style="--thumb-color:${ax.color}"
+            oninput="labState['${ax.id}']=+this.value;document.getElementById('lv-${ax.id}').textContent=this.value;recomputeLab()">
+          <div class="axis-val" id="lv-${ax.id}" style="color:${ax.color}">${ax.v}</div>
+        </div>
+      </div>`;
+    }).join('');
+    panel.innerHTML = `
+      <div class="lab-panel-head">
+        <div class="lab-panel-title">${g.title}</div>
+        <div class="lab-panel-score" id="lp-${g.panelId}" style="color:${g.color}">–</div>
+      </div>
+      <div class="lab-panel-body"><div class="slider-group">${sliders}</div></div>`;
+    grid.appendChild(panel);
+  });
+
+  // fix slider thumb color via CSS var trick
+  document.querySelectorAll('.axis-slider-v2').forEach(s => {
+    const c = s.style.getPropertyValue('--thumb-color') || '#00bfa5';
+    s.style.background = 'var(--b2)';
+    const style = document.createElement('style');
+    style.textContent = '';
+    document.head.appendChild(style);
+  });
+
+  recomputeLab();
+}
+
+function computeScore(axes, state) {
+  return Math.round(axes.reduce((s, ax) => s + (state[ax.id] || 0) * ax.w, 0));
+}
+function computeOIS(state) {
+  const penalty = OIS_AXES.reduce((s, ax) => s + (state[ax.id] || 0) / 100 * ax.penalty, 0);
+  return Math.max(0, Math.round(100 - penalty));
+}
+function calcSPS(tes, ois, wsl, cci) {
+  return Math.round(0.40 * tes + 0.25 * ois + 0.20 * (100 - wsl) + 0.15 * (100 - cci));
+}
+
+function recomputeLab() {
+  const cci = computeScore(CCI_AXES, labState);
+  const tes = computeScore(TES_AXES, labState);
+  const wsl = computeScore(WSL_AXES, labState);
+  const ois = computeOIS(labState);
+  const sps = calcSPS(tes, ois, wsl, cci);
+
+  document.getElementById('d-cci').textContent = cci;
+  document.getElementById('d-tes').textContent = tes;
+  document.getElementById('d-wsl').textContent = wsl;
+  document.getElementById('d-ois').textContent = ois;
+  document.getElementById('d-sps').textContent = sps;
+
+  document.getElementById('lp-cci').textContent = cci;
+  document.getElementById('lp-tes').textContent = tes;
+  document.getElementById('lp-wsl').textContent = wsl;
+  document.getElementById('lp-ois').textContent = ois;
+
+  // golf archetype
+  let golf = 'Iron';
+  if (cci > 80) golf = 'Driver';
+  else if (cci < 40) golf = 'Pitching Wedge';
+  else if (labState['precT'] > 85 && cci < 70) golf = 'Lob Wedge / Sand Wedge';
+  document.getElementById('interp-golf').textContent = golf;
+
+  // state
+  let state = 'Clean Strike', stateColor = 'var(--teal)';
+  if (ois < 75 || labState['critErr'] > 0) { state = 'Hazard State'; stateColor = 'var(--red)'; }
+  else if (tes < 65 || ois < 84 || wsl > 85) { state = 'Off-Plane Recovery'; stateColor = 'var(--amber)'; }
+  else if (tes < 80 || wsl > 75) { state = 'Slight Mishit'; stateColor = 'var(--blue)'; }
+  else if (wsl > 70 && ois >= 85) { state = 'Clutch Finish'; stateColor = 'var(--violet)'; }
+  const chip = document.getElementById('lab-state-chip');
+  chip.textContent = state;
+  chip.style.color = stateColor;
+  chip.style.borderColor = stateColor.replace(')',', .3)').replace('var(', 'rgba(');
+}
+
+// ─────────────────────────────────────────
+// BUILD PLAYBOOK
+// ─────────────────────────────────────────
+function buildPlaybook() {
+  const grid = document.getElementById('playbook-grid');
+  CASES.forEach(c => {
+    const sps = calcSPS(c.scores.tes, c.scores.ois, c.scores.wsl, c.scores.cci);
+    const card = document.createElement('div');
+    card.className = 'play-card fade-in';
+    card.dataset.shot = c.shotClass;
+
+    const evLabel = { e1:'E1 Measured', e2:'E2 Literature', e3:'E3 Expert', e4:'E4 Simulated' };
+    const phaseHtml = c.phases.map((p,i) =>
+      `<span class="phase-p">${p}</span>${i < c.phases.length-1 ? '<span class="phase-arrow">›</span>' : ''}`
+    ).join('');
+
+    card.innerHTML = `
+      <div class="play-card-head">
+        <div class="play-card-badges">
+          <span class="shot shot-${c.shotClass}">${c.golf}</span>
+          <span class="ev ev-${c.evidence}">${evLabel[c.evidence]}</span>
+        </div>
+        <div class="play-card-sps" style="color:${sps >= 80 ? 'var(--blue)' : sps >= 60 ? 'var(--teal)' : sps >= 40 ? 'var(--amber)' : 'var(--red)'}">${sps}</div>
+      </div>
+      <div class="play-card-title">${c.procedure}</div>
+      <div class="play-card-spec">${c.specialty}</div>
+      <div class="play-card-phases">${phaseHtml}</div>
+      <div class="play-scores">
+        <div class="play-score-cell">
+          <div class="play-score-id">CCI</div>
+          <div class="play-score-val" style="color:var(--red)">${c.scores.cci}</div>
+        </div>
+        <div class="play-score-cell">
+          <div class="play-score-id">TES</div>
+          <div class="play-score-val" style="color:var(--teal)">${c.scores.tes}</div>
+        </div>
+        <div class="play-score-cell">
+          <div class="play-score-id">WSL</div>
+          <div class="play-score-val" style="color:var(--amber)">${c.scores.wsl}</div>
+        </div>
+        <div class="play-score-cell">
+          <div class="play-score-id">OIS</div>
+          <div class="play-score-val" style="color:var(--blue)">${c.scores.ois}</div>
+        </div>
+      </div>
+      <div class="play-card-body">
+        <div class="play-kicker">Objective Metrics</div>
+        <div class="play-metrics-row">
+          ${Object.entries(c.obj).map(([k,v]) => `
+            <div class="play-metric-item">
+              <div class="play-metric-val">${v.replace(/ E[1-4]$/,'')}</div>
+              <div class="play-metric-lbl">${k}</div>
+            </div>`).join('')}
+        </div>
+        <div class="play-kicker" style="margin-top:12px">Failure Modes</div>
+        <div class="failure-list">
+          ${c.failures.map(f => `<div class="failure-item">${f}</div>`).join('')}
+        </div>
+        <div class="play-assist">⬡ ${c.assist}</div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function filterCards(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active-f'));
+  btn.classList.add('active-f');
+  document.querySelectorAll('.play-card').forEach(c => {
+    c.style.display = (type === 'all' || c.dataset.shot === type) ? '' : 'none';
+  });
+}
+
+// ─────────────────────────────────────────
+// BUILD STATES
+// ─────────────────────────────────────────
+function buildStates() {
+  const grid = document.getElementById('state-grid');
+  grid.innerHTML = STATES.map(s => `
+    <div class="state-card fade-in">
+      <span class="state-glyph" style="color:${s.color}">${s.glyph}</span>
+      <div class="state-name" style="color:${s.color}">${s.name}</div>
+      <div class="state-golf">⛳ ${s.golf}</div>
+      <div class="state-trigger">Trigger condition</div>
+      <span class="state-trigger-val">${s.trigger}</span>
+      <div class="state-desc">${s.desc}</div>
+    </div>`).join('');
+}
+
+// ─────────────────────────────────────────
+// BUILD METHODS
+// ─────────────────────────────────────────
+function buildMethods() {
+  const grid = document.getElementById('method-grid');
+  grid.innerHTML = METHODS.map(m => `
+    <div class="method-card fade-in">
+      <span class="method-num-tag">// ${m.num}</span>
+      <div class="method-title">${m.title}</div>
+      <div class="method-body">${m.body}</div>
+      <pre class="formula-block">${m.formula}</pre>
+      ${m.sources ? `<div class="method-sources">${m.sources.map(s => `<div class="method-source">${s}</div>`).join('')}</div>` : ''}
+    </div>`).join('');
+}
+
+// ─────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────
+const pageMap = {
+  overview: 'page-overview',
+  lab:      'page-lab',
+  playbook: 'page-playbook',
+  states:   'page-states',
+  method:   'page-method',
+};
+function showPage(id, btn) {
+  Object.values(pageMap).forEach(p => document.getElementById(p).classList.remove('active'));
+  document.getElementById(pageMap[id]).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  revealAll();
+}
+
+// ─────────────────────────────────────────
+// REVEAL
+// ─────────────────────────────────────────
+function revealAll() {
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.fade-in').forEach((el, i) => {
+      setTimeout(() => el.classList.add('visible'), i * 40);
+    });
+  });
+}
+
+// ─────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────
+buildTable();
+buildLab();
+buildPlaybook();
+buildStates();
+buildMethods();
+revealAll();
+
+// slider thumb color via JS
+document.querySelectorAll('.axis-slider-v2').forEach(s => {
+  const c = s.getAttribute('style').match(/var\(([^)]+)\)/)?.[1] || '--teal';
+  s.addEventListener('input', function() {
+    const pct = (this.value - this.min) / (this.max - this.min) * 100;
+    this.style.background = `linear-gradient(90deg, ${getComputedStyle(document.documentElement).getPropertyValue(c.replace('var(','').replace(')'),'')  || '#00bfa5'} ${pct}%, var(--b2) ${pct}%)`;
+  });
+});
+
+// radar pulse
+let t = 0;
+const poly = document.getElementById('radar-poly');
+if (poly) {
+  setInterval(() => {
+    t += 0.008;
+    const f = 1 + Math.sin(t) * 0.015;
+    poly.style.transform = `scale(${f})`;
+    poly.style.transformOrigin = '180px 180px';
+  }, 40);
+}
+</script>
+</body>
+</html>

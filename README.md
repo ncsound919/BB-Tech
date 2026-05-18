@@ -38,7 +38,7 @@ Each archetype includes:
 - Complete metric suite with formulas
 - Narrative arc from emergence to ecosystem impact
 
-**[→ Read Full Pathogen Archetypes Doc](Pathogen%20Archetypes)**
+**[→ Read Full Pathogen Archetypes Doc](Pathogen%20Archetypes.md)**
 
 ---
 
@@ -66,7 +66,7 @@ Each Playbook System includes:
 **Example: Viral Gravity Offense**  
 Models how a single deep-range shooter (Curry-type virus) reshapes an offensive ecosystem via infection dynamics. Maps to treatment-resistant mutation spread in tumors.
 
-**[→ Read Full Playbook Series Doc](The%20Playbook%20Series)**
+**[→ Read Full Playbook Series Doc](The%20Playbook%20Series.md)**
 
 ---
 
@@ -101,7 +101,7 @@ Models how a single deep-range shooter (Curry-type virus) reshapes an offensive 
 - **Phase 2** (2026 Q4): Lab formalization with steering committee, IRB pathways
 - **Phase 3** (2027+): Expansion fundraise, hire 2-4 staff, new disease areas
 
-**[→ Read Full Digital Lab Doc](BBTech%20Digital%20Lab)**
+**[→ Read Full Digital Lab Doc](BBTech%20Digital%20Lab.md)**
 
 ---
 
@@ -134,7 +134,7 @@ Models how a single deep-range shooter (Curry-type virus) reshapes an offensive 
 - Break-even at 200-1000 experiments/month vs. human researchers
 - 10-100x more cost-effective at scale
 
-**[→ Read Full Agent Stack Doc](Autonomous%20Agent%20Stack)**
+**[→ Read Full Agent Stack Doc](Autonomous%20Agent%20Stack.md)**
 
 ---
 
@@ -213,17 +213,26 @@ Allows full experiment replay and audit trails for funders/regulators.
 ## Getting Started
 
 ### Explore the Docs
-1. **[Pathogen Archetypes](Pathogen%20Archetypes)** – Understand the biological-player mappings
-2. **[The Playbook Series](The%20Playbook%20Series)** – Browse reproducible system protocols
-3. **[BBTech Digital Lab](BBTech%20Digital%20Lab)** – Learn about lab structure and funding
-4. **[Autonomous Agent Stack](Autonomous%20Agent%20Stack)** – See the 24/7 infrastructure design
+1. **[Pathogen Archetypes](Pathogen%20Archetypes.md)** – Understand the biological-player mappings
+2. **[The Playbook Series](The%20Playbook%20Series.md)** – Browse reproducible system protocols
+3. **[BBTech Digital Lab](BBTech%20Digital%20Lab.md)** – Learn about lab structure and funding
+4. **[Autonomous Agent Stack](Autonomous%20Agent%20Stack.md)** – See the 24/7 infrastructure design
 
-### Run a Simulation
-- Review existing **Cancer Treatment** and **Analytics Engine** files
-- Pick a Playbook System (e.g., Viral Gravity Offense)
-- Gather required datasets or use synthetic benchmarks
-- Follow the simulation design and experiment templates
-- Log results to ledger for reproducibility
+### Run the Integrated Simulation Core
+We have converted the conceptual metagame specifications into a **fully functioning, production-ready Python package** containing the entire analytical, clinical, agent-based, and game-theoretic codebase!
+
+To run a full demonstration of the computational research pipeline (including Tumor Efficiency calculations, Dean Oliver's Four Factors, Voronoi tessellation, evolutionary agent rosters, and Lotka-Volterra Stackelberg adaptive therapy vs MTD simulations):
+
+1. **Install Dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. **Execute the Integrated Diagnostic Suite**:
+   ```bash
+   python run_demo.py
+   ```
+
+This will run the entire codebase end-to-end and display dynamic therapeutic results, secure on-chain Polygon transaction hashes, and autonomous triage logs!
 
 ### Partner with BBTech
 - **Academic researchers**: Collaborate on pilot studies
@@ -268,7 +277,7 @@ BBTech welcomes contributions:
 - Visualizations and dashboards
 - Bug reports and parameter refinements
 
-See CONTRIBUTING.md (coming soon) for guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ---
 

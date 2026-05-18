@@ -1,0 +1,55 @@
+# Python cache & build
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.pytest_cache/
+.ipynb_checkpoints/
+*.egg-info/
+dist/
+build/
+
+# Node.js dependencies & builds
+frontend/node_modules/
+frontend/dist/
+frontend/.svelte-kit/
+frontend/.next/
+
+# External large workspace directories (unrelated to BB-Tech)
+AI-Scientist-main/
+BioAutoEngine/
+BlackMind-main/
+BookBridge--main/
+Claw-Protect-main/
+ColabFold-main/
+MolecularGraph.jl-master/
+Overlay-Chemlab-main/
+Tiz554/
+background-agents-main/
+bio-auto-engine/
+litellm-main/
+science papers/
+
+# Local configuration & environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Operating System & IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Temporary and local data
+*.log
+*.tmp
+.antigravity/
+.gemini/
